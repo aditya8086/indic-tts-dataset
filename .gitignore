@@ -1,0 +1,4 @@
+echo ".env
+.vscode/
+clips/
+raw_audio/" > .gitignore

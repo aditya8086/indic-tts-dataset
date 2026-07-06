@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 
 
-emotion_df = pd.read_csv("metadata/emotion_labels.csv")
+emotion_df = pd.read_csv("metadata/style_labels.csv")
 
 source_df = pd.concat([
     pd.read_csv("metadata/english.csv"),
