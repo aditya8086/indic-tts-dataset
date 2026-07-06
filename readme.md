@@ -1,51 +1,109 @@
-# Sarvam TTS Dataset Pipeline
+# indic-tts-dataset
 
-Pipeline built for the Sarvam AI "ML & Speech Data Pipeline" internship assignment.
-Produces a 57-clip, single-speaker English + Hindi speech dataset for TTS training.
+End-to-end pipeline for building a Hindi + English TTS training dataset from YouTube audio. Downloads source videos, cuts timestamped clips, transcribes with ASR, labels speaking style with an LLM, and publishes a structured dataset to HuggingFace.
 
-**Dataset (HuggingFace):** https://huggingface.co/datasets/aditya1101203/sarvam-tts-dataset
+**Dataset:** [`aditya1101203/indic-tts-dataset`](https://huggingface.co/datasets/aditya1101203/indic-tts-dataset)
+
+---
 
 ## Pipeline
 
 ```
-YouTube
-  → yt-dlp download (raw audio)
-  → ffmpeg segmentation (clean single-speaker clips, 16kHz mono WAV)
-  → Sarvam ASR (Saaras v3) transcription
-  → Sarvam LLM (sarvam-105b) speaking-style labeling
-  → final structured metadata
-  → HuggingFace dataset
+YouTube URLs + timestamps
+    → 1_acquire.py       yt-dlp download + ffmpeg clip extraction (16kHz mono WAV)
+    → 2_transcribe.py    batch ASR transcription (Saaras v3), saves raw JSON
+    → 3_label_styles.py  speaking style labeling via LLM (closed taxonomy)
+    → 4_build_metadata.py merges transcripts + labels → final_metadata.csv
+    → 5_verify.py        dataset summary — clip counts, duration, style distribution
+    → 6_make_hf_metadata.py generates per-folder metadata.csv for HuggingFace AudioFolder
 ```
 
-## Scripts
+---
 
-| Script | Purpose |
+## Dataset stats
+
+| | |
 |---|---|
-| `1_acquire.py` | Downloads source videos (once per unique URL), cuts timestamped clips using `metadata/english.csv` / `hindi.csv` |
-| `2_transcribe.py` | Batch-transcribes all clips via Sarvam ASR, saves raw JSON transcripts |
-| `3_label_emotions.py` | Reads transcripts, labels each with a primary speaking style via Sarvam LLM |
-| `4_build_metadata.py` | Merges transcripts + style labels into `final_metadata.csv` |
-| `5_verify.py` | Prints dataset summary — clip counts, duration, style distribution |
-| `6_make_hf_metadata.py` | Generates per-folder `metadata.csv` files for HuggingFace's AudioFolder loader |
+| Total clips | 57 |
+| Total duration | ~54 minutes |
+| English | 29 clips |
+| Hindi | 28 clips |
+| Audio format | 16kHz mono WAV |
 
-## Metadata files
+**Style distribution:**
 
-- `metadata/english.csv`, `metadata/hindi.csv` — source video URLs and clip timestamps
-- `metadata/emotion_labels.csv` — transcripts + style labels per clip
-- `metadata/final_metadata.csv` — final merged dataset metadata (audio path, transcript, language, style)
-- `transcripts_eng/`, `transcripts_hindi/` — raw per-clip ASR JSON output from Sarvam Saaras v3
+| Style | Count |
+|---|---|
+| educational | 17 |
+| storytelling | 15 |
+| motivational | 12 |
+| opinion | 9 |
+| conversational | 3 |
+| review | 1 |
 
-## Dataset summary
+---
 
-- 57 total clips (~54 minutes)
-- 29 English clips, 28 Hindi clips
-- Single speaker per clip, natural sentence boundaries, minimal background noise
-- Style labels: storytelling, educational, motivational, conversational, opinion, formal, review, reading
+## Repo structure
 
-## Notes
+```
+indic-tts-dataset/
+├── scripts/
+│   ├── 1_acquire.py
+│   ├── 2_transcribe.py
+│   ├── 3_label_styles.py
+│   ├── 4_build_metadata.py
+│   ├── 5_verify.py
+│   └── 6_make_hf_metadata.py
+├── metadata/
+│   ├── english.csv          # source URLs + timestamps for English clips
+│   ├── hindi.csv            # source URLs + timestamps for Hindi clips
+│   ├── style_labels.csv     # per-clip transcripts + style labels
+│   └── final_metadata.csv   # audio_path, transcript, language, style
+├── transcripts_eng/         # raw ASR JSON output per English clip
+├── transcripts_hindi/       # raw ASR JSON output per Hindi clip
+├── .env.example
+└── README.md
+```
 
-Audio files are not included in this repo (large binary files) — they live in the
-HuggingFace dataset linked above, along with the transcript text and style labels
-(as columns in `metadata.csv`). The raw per-clip ASR JSON outputs (from Sarvam Saaras v3)
-are included here under `transcripts_eng/` and `transcripts_hindi/` for transparency —
-these are the unprocessed ASR outputs before they were merged into `final_metadata.csv`.
+Audio files are not stored in this repo — they live on HuggingFace.
+
+---
+
+## Quickstart
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env  # add your API keys
+```
+
+```bash
+python scripts/1_acquire.py       # download + extract clips
+python scripts/2_transcribe.py    # transcribe
+python scripts/3_label_styles.py  # label speaking style
+python scripts/4_build_metadata.py
+python scripts/5_verify.py        # check dataset summary
+python scripts/6_make_hf_metadata.py
+```
+
+Set `SARVAM_API_KEY` and `HF_TOKEN` in `.env`.
+
+---
+
+## Style taxonomy
+
+Labels are assigned by prompting an LLM with the transcript and constraining output to one of:
+
+| Label | Description |
+|---|---|
+| `educational` | structured explanation or instruction |
+| `storytelling` | narrative, anecdote, personal experience |
+| `motivational` | persuasive or inspirational tone |
+| `opinion` | personal perspective or commentary |
+| `conversational` | informal, dialogue-like delivery |
+| `review` | evaluation of a product, idea, or experience |
+
+---
+
+## License
+
+MIT
