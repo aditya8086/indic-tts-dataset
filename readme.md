@@ -12,7 +12,7 @@ End-to-end pipeline for building a Hindi + English TTS training dataset from You
 YouTube URLs + timestamps
     → 1_acquire.py          yt-dlp download + ffmpeg clip extraction (16kHz mono WAV)
     → 2_transcribe.py       batch ASR transcription (Saaras v3), saves raw JSON
-    → 3_label_styles.py     speaking style labeling via LLM (closed taxonomy)
+    → 3_label_styles.py     speaking style labeling via sarvam-105b (closed taxonomy)
     → 4_build_metadata.py   merges transcripts + labels → final_metadata.csv
     → 5_verify.py           dataset summary — clip counts, duration, style distribution
     → 6_make_hf_metadata.py generates per-folder metadata.csv for HuggingFace AudioFolder
@@ -70,7 +70,7 @@ Audio files are not stored in this repo — they live on HuggingFace.
 
 ## Style taxonomy
 
-Labels are assigned by prompting an LLM with the transcript and constraining output to one of:
+Labels are assigned by prompting sarvam-105b with the transcript and constraining output to one of:
 
 | Label | Description |
 |---|---|
