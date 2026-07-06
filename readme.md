@@ -10,11 +10,11 @@ End-to-end pipeline for building a Hindi + English TTS training dataset from You
 
 ```
 YouTube URLs + timestamps
-    → 1_acquire.py       yt-dlp download + ffmpeg clip extraction (16kHz mono WAV)
-    → 2_transcribe.py    batch ASR transcription (Saaras v3), saves raw JSON
-    → 3_label_styles.py  speaking style labeling via LLM (closed taxonomy)
-    → 4_build_metadata.py merges transcripts + labels → final_metadata.csv
-    → 5_verify.py        dataset summary — clip counts, duration, style distribution
+    → 1_acquire.py          yt-dlp download + ffmpeg clip extraction (16kHz mono WAV)
+    → 2_transcribe.py       batch ASR transcription (Saaras v3), saves raw JSON
+    → 3_label_styles.py     speaking style labeling via LLM (closed taxonomy)
+    → 4_build_metadata.py   merges transcripts + labels → final_metadata.csv
+    → 5_verify.py           dataset summary — clip counts, duration, style distribution
     → 6_make_hf_metadata.py generates per-folder metadata.csv for HuggingFace AudioFolder
 ```
 
@@ -61,31 +61,10 @@ indic-tts-dataset/
 │   └── final_metadata.csv   # audio_path, transcript, language, style
 ├── transcripts_eng/         # raw ASR JSON output per English clip
 ├── transcripts_hindi/       # raw ASR JSON output per Hindi clip
-├── .env.example
 └── README.md
 ```
 
 Audio files are not stored in this repo — they live on HuggingFace.
-
----
-
-## Quickstart
-
-```bash
-pip install -r requirements.txt
-cp .env.example .env  # add your API keys
-```
-
-```bash
-python scripts/1_acquire.py       # download + extract clips
-python scripts/2_transcribe.py    # transcribe
-python scripts/3_label_styles.py  # label speaking style
-python scripts/4_build_metadata.py
-python scripts/5_verify.py        # check dataset summary
-python scripts/6_make_hf_metadata.py
-```
-
-Set `SARVAM_API_KEY` and `HF_TOKEN` in `.env`.
 
 ---
 
